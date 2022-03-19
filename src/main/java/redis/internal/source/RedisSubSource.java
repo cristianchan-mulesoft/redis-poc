@@ -21,8 +21,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import redis.api.SubscribeChannelAttributes;
-import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPubSub;
+import redis.internal.connection.RedisConnection;
 
 @DisplayName("On New Message")
 @Alias("subscribe")
@@ -35,14 +35,14 @@ public class RedisSubSource extends Source<String, SubscribeChannelAttributes> {
   private String channel;
 
   @Connection
-  private ConnectionProvider<Jedis> connectionProvider;
+  private ConnectionProvider<RedisConnection> connectionProvider;
 
   private JedisPubSub jedisPubSub;
 
   @Override
   public void onStart(SourceCallback<String, SubscribeChannelAttributes> sourceCallback) throws MuleException {
     LOGGER.info("Starting redis listener {} ", channel);
-    final Jedis connection = connectionProvider.connect();
+    final RedisConnection connection = connectionProvider.connect();
     jedisPubSub = new JedisPubSub() {
 
       @Override

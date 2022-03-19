@@ -7,24 +7,23 @@
 
 package redis.internal.metadata;
 
+import static java.util.stream.Collectors.toSet;
+import static org.mule.metadata.api.model.MetadataFormat.JAVA;
+import static org.mule.runtime.api.metadata.resolving.FailureCode.INVALID_METADATA_KEY;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+
 import org.mule.metadata.api.builder.BaseTypeBuilder;
 import org.mule.metadata.api.builder.ObjectTypeBuilder;
 import org.mule.metadata.api.model.MetadataType;
-import org.mule.runtime.api.connection.ConnectionException;
 import org.mule.runtime.api.metadata.MetadataContext;
 import org.mule.runtime.api.metadata.MetadataKey;
 import org.mule.runtime.api.metadata.MetadataKeyBuilder;
 import org.mule.runtime.api.metadata.MetadataResolvingException;
 import org.mule.runtime.api.metadata.resolving.InputTypeResolver;
 import org.mule.runtime.api.metadata.resolving.TypeKeysResolver;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-
-import static java.util.stream.Collectors.toSet;
-import static org.mule.metadata.api.model.MetadataFormat.JAVA;
-import static org.mule.runtime.api.metadata.resolving.FailureCode.INVALID_METADATA_KEY;
 
 public class RedisInputResolverWithKeyResolver implements TypeKeysResolver, InputTypeResolver<String> {
 
@@ -45,7 +44,7 @@ public class RedisInputResolverWithKeyResolver implements TypeKeysResolver, Inpu
         objectBuilder.addField().key("values").value().arrayType().of().stringType();
         break;
       default:
-        throw new MetadataResolvingException("Unknown key:" + key, INVALID_METADATA_KEY);
+        throw new MetadataResolvingException("Unknown data type:" + key, INVALID_METADATA_KEY);
     }
 
     return objectBuilder.build();

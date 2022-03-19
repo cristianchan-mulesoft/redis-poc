@@ -7,17 +7,26 @@
 
 package redis.internal.connection;
 
+import redis.clients.jedis.JedisPubSub;
 
 import java.util.List;
 import java.util.Set;
 
 public interface RedisConnection {
 
-  void set(String value);
+  void connect();
 
-  void set(List<String> values);
+  void disconnect();
 
-  void set(Set<String> values);
+  void subscribe(final JedisPubSub jedisPubSub, final String channel);
+
+  boolean isConnected();
+
+  void set(String key, String value);
+
+  void setList(String key, String[] values);
+
+  void setSet(String key, String[] values);
 
   String get(String key);
 

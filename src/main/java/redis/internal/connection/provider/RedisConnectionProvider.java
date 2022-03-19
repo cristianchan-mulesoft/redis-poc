@@ -7,6 +7,8 @@
 
 package redis.internal.connection.provider;
 
+import static org.mule.runtime.extension.api.annotation.param.ParameterGroup.CONNECTION;
+
 import org.mule.runtime.api.connection.CachedConnectionProvider;
 import org.mule.runtime.api.connection.ConnectionException;
 import org.mule.runtime.api.connection.ConnectionValidationResult;
@@ -14,27 +16,28 @@ import org.mule.runtime.extension.api.annotation.param.ParameterGroup;
 import org.mule.runtime.extension.api.annotation.param.display.Placement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import redis.clients.jedis.Jedis;
+
 import redis.clients.jedis.exceptions.JedisConnectionException;
+import redis.internal.connection.RedisConnection;
+import redis.internal.connection.RedisJedisConnection;
 import redis.internal.connection.param.RedisParams;
 
-import static org.mule.runtime.extension.api.annotation.param.ParameterGroup.CONNECTION;
+public class RedisConnectionProvider implements CachedConnectionProvider<RedisConnection> {
 
-public class RedisConnectionProvider implements CachedConnectionProvider<Jedis> {
-
-  private final Logger LOGGER = LoggerFactory.getLogger(RedisConnectionProvider.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(RedisConnectionProvider.class);
 
   @ParameterGroup(name = CONNECTION)
   @Placement(order = 1)
   private RedisParams connectionParams;
 
   @Override
-  public Jedis connect() throws ConnectionException {
+  public RedisConnection connect() throws ConnectionException {
     LOGGER.info("Redis connector ready, host: {}, port: {}",
                 connectionParams.getHost(),
                 connectionParams.getPort());
 
-    Jedis jedis = new Jedis(connectionParams.getHost(), connectionParams.getPort(), connectionParams.getTimeout());
+    RedisConnection jedis =
+        new RedisJedisConnection(connectionParams.getHost(), connectionParams.getPort(), connectionParams.getTimeout());
 
     try {
       jedis.connect();
@@ -47,7 +50,7 @@ public class RedisConnectionProvider implements CachedConnectionProvider<Jedis> 
   }
 
   @Override
-  public void disconnect(Jedis connection) {
+  public void disconnect(RedisConnection connection) {
     try {
       connection.disconnect();
     } catch (Exception e) {
@@ -57,14 +60,14 @@ public class RedisConnectionProvider implements CachedConnectionProvider<Jedis> 
   }
 
   @Override
-  public ConnectionValidationResult validate(Jedis connection) {
-    final boolean connectionStatus = connection.getConnection().isConnected();
+  public ConnectionValidationResult validate(RedisConnection connection) {
+    final boolean connectionStatus = connection.isConnected();
     if (connectionStatus) {
       return ConnectionValidationResult.success();
     } else {
       return ConnectionValidationResult.failure("Error to connect to redis host",
                                                 new ConnectionException("Unable to establish connection to redis : "
-                                                    + connection.getConnection().toString()));
+                                                    + connection));
     }
   }
 }

@@ -18,64 +18,96 @@ import org.mule.runtime.extension.api.annotation.param.MediaType;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import redis.clients.jedis.Jedis;
 import redis.clients.jedis.exceptions.JedisConnectionException;
+import redis.internal.connection.RedisConnection;
 import redis.internal.metadata.RedisInputResolverWithKeyResolver;
 import redis.internal.metadata.RedisOutputAnyTypeResolver;
 import redis.internal.metadata.model.ListType;
 import redis.internal.metadata.model.StringType;
 
+/**
+ *  Redis is an open-source, networked, in-memory, persistent, journaled, key-value data store. Provides Redis connectivity to Mule:
+ *  <ul>
+ *  <li>Supports Redis Subscribe model for asynchronous message exchanges,</li>
+ *  <li>Allows direct reading and writing operations in Redis collections,</li>
+ *  </ul>
+ *
+ *   @author MuleSoft, Inc.
+ */
 public class RedisOperations {
 
   private final ObjectMapper mapper = new ObjectMapper();
 
-  public void set(@MetadataKeyId(RedisInputResolverWithKeyResolver.class) String type,
-                  @Content @TypeResolver(RedisInputResolverWithKeyResolver.class) Map<String, Object> content,
-                  @Connection Jedis connection)
+  /**
+   * Set the key and value in redis.
+   * <p>
+   *
+   * @param type        The input content type
+   * @param content     The key and the value to store
+   * @param connection  Connection to redis
+   */
+  public void set(@MetadataKeyId(RedisInputResolverWithKeyResolver.class) final String type,
+                  @Content @TypeResolver(RedisInputResolverWithKeyResolver.class) final Map<String, Object> content,
+                  @Connection final RedisConnection connection)
       throws ConnectionException {
 
     try {
-      if (type.equals("String")) {
-        final StringType input = mapper.convertValue(content, StringType.class);
-        final String key = input.getKey();
-        final String value = input.getValue();
+      switch (type) {
+        case "String": {
+          final StringType input = mapper.convertValue(content, StringType.class);
+          final String key = input.getKey();
+          final String value = input.getValue();
 
-        connection.set(key, value);
-      } else if (type.equals("List")) {
-        final ListType input = mapper.convertValue(content, ListType.class);
-        final String key = input.getKey();
-        final String[] values = input.getValues();
+          connection.set(key, value);
+          break;
+        }
+        case "List": {
+          final ListType input = mapper.convertValue(content, ListType.class);
+          final String key = input.getKey();
+          final String[] values = input.getValues();
 
-        connection.lpush(key, values);
-      } else if (type.equals("Set")) {
-        final ListType input = mapper.convertValue(content, ListType.class);
-        final String key = input.getKey();
-        final String[] values = input.getValues();
+          connection.setList(key, values);
+          break;
+        }
+        case "Set": {
+          final ListType input = mapper.convertValue(content, ListType.class);
+          final String key = input.getKey();
+          final String[] values = input.getValues();
 
-        connection.sadd(key, values);
+          connection.setSet(key, values);
+          break;
+        }
       }
     } catch (final JedisConnectionException connectionException) {
-      throw new ConnectionException("Unable to connect to redis host : " + connection.getConnection().toString());
+      throw new ConnectionException("Unable to connect to redis : " + connection.toString());
     }
-
   }
 
+  /**
+   * Set the value stored in redis.
+   * <p>
+   *
+   * @param type        The input content type
+   * @param connection  Connection to redis
+   * @param key         Key of the value to return
+   * @return If the key already exists and ifNotExists is true, null is returned. Otherwise the message is returned.
+   */
   @OutputResolver(output = RedisOutputAnyTypeResolver.class)
   @MediaType(value = MediaType.ANY, strict = false)
-  public Object get(@Connection Jedis connection,
-                    String key,
-                    @MetadataKeyId(RedisInputResolverWithKeyResolver.class) String type) {
+  public Object get(@Connection final RedisConnection connection,
+                    final String key,
+                    @MetadataKeyId(RedisInputResolverWithKeyResolver.class) final String type) {
 
 
-    if (type.equals("String")) {
-      return connection.get(key);
-    } else if (type.equals("List")) {
-      final long size = connection.llen(key);
-      return connection.lrange(key, 0, size);
-    } else if (type.equals("Set")) {
-      return connection.smembers(key);
+    switch (type) {
+      case "String":
+        return connection.get(key);
+      case "List":
+        return connection.getList(key);
+      case "Set":
+        return connection.getSet(key);
+      default:
+        return null;
     }
-
-    return null;
   }
 }

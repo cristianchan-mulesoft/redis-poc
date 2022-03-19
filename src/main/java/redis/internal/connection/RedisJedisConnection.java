@@ -7,12 +7,11 @@
 
 package redis.internal.connection;
 
-import redis.clients.jedis.Jedis;
-
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Set;
+
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPubSub;
 
 public class RedisJedisConnection implements RedisConnection {
 
@@ -29,34 +28,64 @@ public class RedisJedisConnection implements RedisConnection {
     this.jedis = new Jedis(host, port, timeout);
   }
 
-
   @Override
-  public void set(String value) {
-
+  public void connect() {
+    jedis.connect();
   }
 
   @Override
-  public void set(List<String> values) {
-
+  public void disconnect() {
+    jedis.disconnect();
   }
 
   @Override
-  public void set(Set<String> values) {
-
+  public void subscribe(final JedisPubSub jedisPubSub, final String channel) {
+    jedis.subscribe(jedisPubSub, channel);
   }
 
   @Override
-  public String get(String key) {
-    return null;
+  public boolean isConnected() {
+    return jedis.isConnected();
   }
 
   @Override
-  public List<String> getList(String key) {
-    return null;
+  public void set(final String key, final String value) {
+    jedis.set(key, value);
   }
 
   @Override
-  public Set<String> getSet(String key) {
-    return null;
+  public void setList(final String key, final String[] values) {
+    jedis.lpush(key, values);
+  }
+
+  @Override
+  public void setSet(final String key, final String[] values) {
+    jedis.sadd(key, values);
+  }
+
+  @Override
+  public String get(final String key) {
+    return jedis.get(key);
+  }
+
+  @Override
+  public List<String> getList(final String key) {
+    final long size = jedis.llen(key);
+    return jedis.lrange(key, 0, size);
+  }
+
+  @Override
+  public Set<String> getSet(final String key) {
+    return jedis.smembers(key);
+  }
+
+  @Override
+  public String toString() {
+    return "RedisJedisConnection{" +
+        "host='" + host + '\'' +
+        ", port=" + port +
+        ", timeout=" + timeout +
+        ", jedis=" + jedis +
+        '}';
   }
 }
