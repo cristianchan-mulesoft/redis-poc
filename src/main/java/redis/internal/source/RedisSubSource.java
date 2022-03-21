@@ -48,7 +48,7 @@ public class RedisSubSource extends Source<String, SubscribeChannelAttributes> {
   private RedisConnection connection;
 
   @Override
-  public void onStart(SourceCallback<String, SubscribeChannelAttributes> sourceCallback) throws MuleException {
+  public void onStart(final SourceCallback<String, SubscribeChannelAttributes> sourceCallback) throws MuleException {
     LOGGER.info("Starting redis listener {} ", channel);
     connection = connectionProvider.connect();
 
@@ -56,7 +56,7 @@ public class RedisSubSource extends Source<String, SubscribeChannelAttributes> {
       jedisPubSub = new JedisPubSub() {
 
         @Override
-        public void onMessage(String channel, String message) {
+        public void onMessage(final String channel,final String message) {
           LOGGER.info("Message received {} for channel {} ", message, channel);
           final SubscribeChannelAttributes subAttributes = new SubscribeChannelAttributes();
           subAttributes.setChannel(channel);
