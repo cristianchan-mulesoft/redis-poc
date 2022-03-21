@@ -7,8 +7,10 @@
 
 package redis.internal.source;
 
+import org.mule.runtime.api.connection.ConnectionException;
 import org.mule.runtime.api.connection.ConnectionProvider;
 import org.mule.runtime.api.exception.MuleException;
+import org.mule.runtime.api.exception.MuleRuntimeException;
 import org.mule.runtime.extension.api.annotation.Alias;
 import org.mule.runtime.extension.api.annotation.param.Connection;
 import org.mule.runtime.extension.api.annotation.param.MediaType;
@@ -22,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import redis.api.SubscribeChannelAttributes;
 import redis.clients.jedis.JedisPubSub;
+import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.internal.connection.RedisConnection;
 
 @DisplayName("On New Message")
@@ -31,6 +34,9 @@ public class RedisSubSource extends Source<String, SubscribeChannelAttributes> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(RedisSubSource.class);
 
+  /**
+   * Redis channel name to listen.
+   */
   @Parameter
   private String channel;
 
@@ -39,26 +45,36 @@ public class RedisSubSource extends Source<String, SubscribeChannelAttributes> {
 
   private JedisPubSub jedisPubSub;
 
+  private RedisConnection connection;
+
   @Override
   public void onStart(SourceCallback<String, SubscribeChannelAttributes> sourceCallback) throws MuleException {
     LOGGER.info("Starting redis listener {} ", channel);
-    final RedisConnection connection = connectionProvider.connect();
-    jedisPubSub = new JedisPubSub() {
+    connection = connectionProvider.connect();
 
-      @Override
-      public void onMessage(String channel, String message) {
-        LOGGER.info("Message received {} for channel {} ", message, channel);
-        final SubscribeChannelAttributes subAttributes = new SubscribeChannelAttributes();
-        subAttributes.setChannel(channel);
-        sourceCallback.handle(Result.<String, SubscribeChannelAttributes>builder()
-            .output(message)
-            .attributes(subAttributes)
-            .build());
-        LOGGER.info("Message send it {} for channel {} ", message, channel);
-      }
-    };
+    try {
+      jedisPubSub = new JedisPubSub() {
 
-    connection.subscribe(jedisPubSub, channel);
+        @Override
+        public void onMessage(String channel, String message) {
+          LOGGER.info("Message received {} for channel {} ", message, channel);
+          final SubscribeChannelAttributes subAttributes = new SubscribeChannelAttributes();
+          subAttributes.setChannel(channel);
+          sourceCallback.handle(Result.<String, SubscribeChannelAttributes>builder()
+              .output(message)
+              .attributes(subAttributes)
+              .build());
+          LOGGER.info("Message send it {} for channel {} ", message, channel);
+        }
+      };
+
+      connection.subscribe(jedisPubSub, channel);
+    } catch (final JedisConnectionException exception) {
+      sourceCallback.onConnectionException(new ConnectionException("Unable to connect to redis  : " + connection.toString()));
+    } catch (final Exception exception) {
+      LOGGER.error("Unexpected error ", exception);
+      throw new MuleRuntimeException(exception);
+    }
   }
 
   @Override
@@ -66,6 +82,7 @@ public class RedisSubSource extends Source<String, SubscribeChannelAttributes> {
     if (jedisPubSub.isSubscribed()) {
       LOGGER.info("Unsubscribing channel: {}", channel);
       jedisPubSub.unsubscribe();
+      connectionProvider.disconnect(connection);
       LOGGER.info("Successfully unsubscribed from channel {}", channel);
     }
   }

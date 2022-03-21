@@ -9,6 +9,7 @@ package redis.internal.operation;
 import java.util.Map;
 
 import org.mule.runtime.api.connection.ConnectionException;
+import org.mule.runtime.extension.api.annotation.error.Throws;
 import org.mule.runtime.extension.api.annotation.metadata.MetadataKeyId;
 import org.mule.runtime.extension.api.annotation.metadata.OutputResolver;
 import org.mule.runtime.extension.api.annotation.metadata.TypeResolver;
@@ -20,6 +21,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.internal.connection.RedisConnection;
+import redis.internal.error.RedisErrorTypeProvider;
+import redis.internal.error.exceptions.RedisInvalidTypeException;
 import redis.internal.metadata.RedisInputResolverWithKeyResolver;
 import redis.internal.metadata.RedisOutputAnyTypeResolver;
 import redis.internal.metadata.model.ListType;
@@ -46,6 +49,7 @@ public class RedisOperations {
    * @param content     The key and the value to store
    * @param connection  Connection to redis
    */
+  @Throws(RedisErrorTypeProvider.class)
   public void set(@MetadataKeyId(RedisInputResolverWithKeyResolver.class) final String type,
                   @Content @TypeResolver(RedisInputResolverWithKeyResolver.class) final Map<String, Object> content,
                   @Connection final RedisConnection connection)
@@ -77,6 +81,10 @@ public class RedisOperations {
           connection.setSet(key, values);
           break;
         }
+
+        default:
+          throw new RedisInvalidTypeException("Unsupported input type :" + type);
+
       }
     } catch (final JedisConnectionException connectionException) {
       throw new ConnectionException("Unable to connect to redis : " + connection.toString());
@@ -94,6 +102,7 @@ public class RedisOperations {
    */
   @OutputResolver(output = RedisOutputAnyTypeResolver.class)
   @MediaType(value = MediaType.ANY, strict = false)
+  @Throws(RedisErrorTypeProvider.class)
   public Object get(@Connection final RedisConnection connection,
                     final String key,
                     @MetadataKeyId(RedisInputResolverWithKeyResolver.class) final String type) {
@@ -107,7 +116,7 @@ public class RedisOperations {
       case "Set":
         return connection.getSet(key);
       default:
-        return null;
+        throw new RedisInvalidTypeException("Unsupported output type :" + type);
     }
   }
 }

@@ -4,13 +4,16 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
+
 package redis.internal.extension;
 
 import org.mule.runtime.extension.api.annotation.Configurations;
 import org.mule.runtime.extension.api.annotation.Extension;
 import org.mule.runtime.extension.api.annotation.dsl.xml.Xml;
+import org.mule.runtime.extension.api.annotation.error.ErrorTypes;
 import org.mule.runtime.extension.api.annotation.license.RequiresEnterpriseLicense;
 import redis.internal.config.RedisConfiguration;
+import redis.internal.error.RedisErrorType;
 
 
 /**
@@ -21,6 +24,7 @@ import redis.internal.config.RedisConfiguration;
 @Extension(name = "Redis-Cris")
 @Configurations(RedisConfiguration.class)
 @RequiresEnterpriseLicense(allowEvaluationLicense = true)
+@ErrorTypes(RedisErrorType.class)
 public class RedisExtension {
 
 }
