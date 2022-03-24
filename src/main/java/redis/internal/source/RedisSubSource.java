@@ -56,7 +56,7 @@ public class RedisSubSource extends Source<String, SubscribeChannelAttributes> {
       jedisPubSub = new JedisPubSub() {
 
         @Override
-        public void onMessage(final String channel,final String message) {
+        public void onMessage(final String channel, final String message) {
           LOGGER.info("Message received {} for channel {} ", message, channel);
           final SubscribeChannelAttributes subAttributes = new SubscribeChannelAttributes();
           subAttributes.setChannel(channel);

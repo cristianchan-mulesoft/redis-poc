@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:redis-cris="http://www.mulesoft.org/schema/mule/redis-cris" xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/redis-cris http://www.mulesoft.org/schema/mule/redis-cris/current/mule-redis-cris.xsd">
+    <redis-cris:jedis-config name="redis-config" doc:name="redis-config" doc:id="0e6359bf-d31a-4760-b16d-a7d8c8341efe" >
+        <redis-cris:connection />
+    </redis-cris:jedis-config>
+</mule>
