@@ -6,7 +6,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.mule.connectors</groupId>
     <artifactId>redis-connector</artifactId>
-    <version>2.0.8-SNAPSHOT</version>
+    <version>2.0.9-SNAPSHOT</version>
     <packaging>mule-extension</packaging>
     <name>Redis-POC Extension</name>
 
@@ -19,6 +19,8 @@
     <properties>
         <munit.version>2.3.8</munit.version>
         <jacoco.maven.plugin.version>0.8.4</jacoco.maven.plugin.version>
+        <maven.helper.plugin.version>3.3.0</maven.helper.plugin.version>
+        <docker.maven.plugin.version>0.39.1</docker.maven.plugin.version>
     </properties>
 
     <dependencies>
@@ -69,6 +71,12 @@
                         <version>${munit.version}</version>
                         <classifier>mule-plugin</classifier>
                     </dependency>
+                    <dependency>
+                        <groupId>org.mule.modules</groupId>
+                        <artifactId>mule-connection-test-module</artifactId>
+                        <version>1.0.0</version>
+                        <classifier>mule-plugin</classifier>
+                    </dependency>
                 </dependencies>
                 <configuration>
                     <argLines>
@@ -78,6 +86,114 @@
                     </argLines>
                 </configuration>
             </plugin>
+            <!-- Reserve ports and inject env vars -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>${maven.helper.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>reserve-network-port</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>reserve-network-port</goal>
+                        </goals>
+                        <configuration>
+                            <portNames>
+                                <portName>redis.port</portName>
+                                <portName>connection.lost.port</portName>
+                                <portName>toxiProxy.api.port</portName>
+                            </portNames>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>docker</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>io.fabric8</groupId>
+                        <artifactId>docker-maven-plugin</artifactId>
+                        <version>${docker.maven.plugin.version}</version>
+                        <configuration>
+                            <images>
+                                <image>
+                                    <name>redis:5</name>
+                                    <alias>redis-${redis.port}</alias>
+                                    <run>
+                                        <containerNamePattern>%a</containerNamePattern>
+                                        <ports>
+                                            <port>redis.port:6379</port>
+                                        </ports>
+                                        <log>
+                                            <enabled>true</enabled>
+                                        </log>
+                                    </run>
+                                </image>
+                                <image>
+                                    <name>shopify/toxiproxy</name>
+                                    <alias>toxiproxy-${toxiProxy.api.port}</alias>
+                                    <run>
+                                        <containerNamePattern>%a</containerNamePattern>
+                                        <ports>
+                                            <port>${toxiProxy.api.port}:8474</port>
+                                            <port>${connection.lost.port}:${connection.lost.port}</port>
+                                        </ports>
+                                        <links>
+                                            <link>redis-${redis.port}</link>
+                                        </links>
+                                    </run>
+                                </image>
+                            </images>
+                            <verbose>true</verbose>
+                        </configuration>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.slf4j</groupId>
+                                <artifactId>slf4j-api</artifactId>
+                                <version>1.7.36</version>
+                            </dependency>
+                            <dependency>
+                                <groupId>org.slf4j</groupId>
+                                <artifactId>jcl-over-slf4j</artifactId>
+                                <version>1.7.36</version>
+                            </dependency>
+                        </dependencies>
+                        <executions>
+                            <execution>
+                                <id>start</id>
+                                <phase>test-compile</phase>
+                                <goals>
+                                    <goal>stop</goal>
+                                    <goal>remove</goal>
+                                    <goal>build</goal>
+                                    <goal>start</goal>
+                                </goals>
+                                <configuration>
+                                    <showLogs>true</showLogs>
+                                    <logStdout>true</logStdout>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>stop</id>
+                                <phase>post-integration-test</phase>
+                                <goals>
+                                    <goal>stop</goal>
+                                    <goal>remove</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

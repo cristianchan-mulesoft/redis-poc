@@ -28,6 +28,8 @@ public interface RedisConnection {
 
   void setSet(String key, String[] values);
 
+  void publish(String channel, String message);
+
   String get(String key);
 
   List<String> getList(String key);

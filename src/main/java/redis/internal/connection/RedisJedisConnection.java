@@ -64,6 +64,11 @@ public class RedisJedisConnection implements RedisConnection {
   }
 
   @Override
+  public void publish(String channel, String message) {
+    jedis.publish(channel, message);
+  }
+
+  @Override
   public String get(final String key) {
     return jedis.get(key);
   }

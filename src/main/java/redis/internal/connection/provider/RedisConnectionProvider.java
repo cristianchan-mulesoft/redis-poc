@@ -11,6 +11,7 @@ import static org.mule.runtime.extension.api.annotation.param.ParameterGroup.CON
 
 import org.mule.runtime.api.connection.CachedConnectionProvider;
 import org.mule.runtime.api.connection.ConnectionException;
+import org.mule.runtime.api.connection.ConnectionProvider;
 import org.mule.runtime.api.connection.ConnectionValidationResult;
 import org.mule.runtime.extension.api.annotation.param.ParameterGroup;
 import org.mule.runtime.extension.api.annotation.param.display.Placement;
@@ -22,7 +23,7 @@ import redis.internal.connection.RedisConnection;
 import redis.internal.connection.RedisJedisConnection;
 import redis.internal.connection.param.RedisParams;
 
-public class RedisConnectionProvider implements CachedConnectionProvider<RedisConnection> {
+public class RedisConnectionProvider implements ConnectionProvider<RedisConnection> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(RedisConnectionProvider.class);
 

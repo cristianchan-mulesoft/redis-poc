@@ -29,13 +29,14 @@ import redis.internal.metadata.model.ListType;
 import redis.internal.metadata.model.StringType;
 
 /**
- *  Redis is an open-source, networked, in-memory, persistent, journaled, key-value data store. Provides Redis connectivity to Mule:
- *  <ul>
- *  <li>Supports Redis Subscribe model for asynchronous message exchanges,</li>
- *  <li>Allows direct reading and writing operations in Redis collections,</li>
- *  </ul>
+ * Redis is an open-source, networked, in-memory, persistent, journaled, key-value data store. Provides Redis connectivity to
+ * Mule:
+ * <ul>
+ * <li>Supports Redis Subscribe model for asynchronous message exchanges,</li>
+ * <li>Allows direct reading and writing operations in Redis collections,</li>
+ * </ul>
  *
- *   @author MuleSoft, Inc.
+ * @author MuleSoft, Inc.
  */
 public class RedisOperations {
 
@@ -45,9 +46,9 @@ public class RedisOperations {
    * Set the key and value in redis.
    * <p>
    *
-   * @param type        The input content type
-   * @param content     The key and the value to store
-   * @param connection  Connection to redis
+   * @param type The input content type
+   * @param content The key and the value to store
+   * @param connection Connection to redis
    */
   @Throws(RedisErrorTypeProvider.class)
   public void set(@MetadataKeyId(RedisInputResolverWithKeyResolver.class) final String type,
@@ -95,9 +96,9 @@ public class RedisOperations {
    * Set the value stored in redis.
    * <p>
    *
-   * @param type        The input content type
-   * @param connection  Connection to redis
-   * @param key         Key of the value to return
+   * @param type The input content type
+   * @param connection Connection to redis
+   * @param key Key of the value to return
    * @return If the key already exists and ifNotExists is true, null is returned. Otherwise the message is returned.
    */
   @OutputResolver(output = RedisOutputAnyTypeResolver.class)
@@ -117,6 +118,27 @@ public class RedisOperations {
         return connection.getSet(key);
       default:
         throw new RedisInvalidTypeException("Unsupported output type :" + type);
+    }
+  }
+
+  /**
+   * Publish the message payload to the specified channel.
+   * <p>
+   *
+   * @param channel Destination of the published message
+   * @param message The message to publish.
+   */
+  @Throws(RedisErrorTypeProvider.class)
+  public void publish(
+                      @Connection RedisConnection connection,
+                      final String channel,
+                      final String message)
+      throws ConnectionException {
+
+    try {
+      connection.publish(channel, message);
+    } catch (final JedisConnectionException exception) {
+      throw new ConnectionException("Unable to connect to redis  : " + connection);
     }
   }
 }

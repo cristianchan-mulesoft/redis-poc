@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:munit="http://www.mulesoft.org/schema/mule/munit"
+      xmlns:redis-cris="http://www.mulesoft.org/schema/mule/redis-cris"
+      xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+      xmlns:connection-test="http://www.mulesoft.org/schema/mule/connection-test"
+      xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+      xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/redis-cris http://www.mulesoft.org/schema/mule/redis-cris/current/mule-redis-cris.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd
+        http://www.mulesoft.org/schema/mule/connection-test http://www.mulesoft.org/schema/mule/connection-test/current/mule-connection-test.xsd">
+    <munit:config name="redis-cris-connection-test.xml"/>
+
+    <munit:before-suite name="before-suite-reconnection">
+        <connection-test:define-proxy-server-port serverPort="${toxiProxy.api.port}"/>
+        <connection-test:create-proxy realPort="6379" realHost="redis-${redis.port}"
+                                      proxyPort="${connection.lost.port}"/>
+    </munit:before-suite>
+
+
+    <munit:test name="reconnection">
+        <munit:enable-flow-sources>
+            <munit:enable-flow-source value="redis-testFlow"/>
+        </munit:enable-flow-sources>
+        <munit:execution>
+            <redis-cris:publish config-ref="redis-config-unstable" channel="test-channel" message="Hello World"/>
+            <munit-tools:dequeue queueName="#[vars.queueName]" timeout="50"  timeoutUnit="SECONDS"/>
+            <logger level="ERROR" message="Disconnecting proxy..."/>
+            <connection-test:disconnect-proxy proxyPort="${connection.lost.port}"/>
+            <munit-tools:sleep time="2000"/>
+
+            <connection-test:reconnect-proxy proxyPort="${connection.lost.port}"/>
+            <logger level="ERROR" message="Reconnected proxy!"/>
+
+            <munit-tools:sleep time="10000"/>
+
+            <redis-cris:publish config-ref="redis-config-unstable" channel="test-channel" message="Hello World"/>
+        </munit:execution>
+        <munit:validation>
+            <munit-tools:assert-that expression="#[payload]" is="#[MunitTools::equalTo('Hello World')]"/>
+        </munit:validation>
+    </munit:test>
+
+    <flow name="redis-testFlow">
+        <redis-cris:subscribe doc:name="On New Message" doc:id="acae2582-d1bd-4048-a39a-53b03e17ee33"
+                              config-ref="redis-config-unstable" channel="test-channel"/>
+        <logger level="INFO" message="#[payload]"/>
+        <set-payload value="#[payload]" doc:name="Set Payload" doc:id="607dcbec-d8cb-4be9-a3a6-0797e89becac"/>
+    </flow>
+
+</mule>

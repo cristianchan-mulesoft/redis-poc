@@ -11,7 +11,7 @@ import org.mule.runtime.extension.api.error.ErrorTypeDefinition;
 import org.mule.runtime.extension.api.error.MuleErrors;
 
 public enum RedisErrorType implements ErrorTypeDefinition<RedisErrorType> {
-  INVALID_INPUT_TYPE(MuleErrors.TRANSFORMATION);
+  INVALID_INPUT_TYPE(MuleErrors.TRANSFORMATION), CONNECTIVITY(MuleErrors.CONNECTIVITY);
 
   private ErrorTypeDefinition<? extends Enum<?>> parent;
 

@@ -27,6 +27,9 @@ import redis.clients.jedis.JedisPubSub;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.internal.connection.RedisConnection;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 @DisplayName("On New Message")
 @Alias("subscribe")
 @MediaType(value = MediaType.ANY, strict = false)
@@ -68,7 +71,12 @@ public class RedisSubSource extends Source<String, SubscribeChannelAttributes> {
         }
       };
 
+      LOGGER.info("Subscribing to channel {} ", channel);
+
       connection.subscribe(jedisPubSub, channel);
+
+      LOGGER.info("Subscribed to channel {} ", channel);
+
     } catch (final JedisConnectionException exception) {
       sourceCallback.onConnectionException(new ConnectionException("Unable to connect to redis  : " + connection.toString()));
     } catch (final Exception exception) {
