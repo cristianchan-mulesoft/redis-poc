@@ -27,10 +27,12 @@
         </munit:enable-flow-sources>
         <munit:execution>
             <redis-cris:publish config-ref="redis-config-unstable" channel="test-channel" message="Hello World"/>
-            <munit-tools:dequeue queueName="#[vars.queueName]" timeout="50"  timeoutUnit="SECONDS"/>
+            <munit-tools:dequeue queueName="reconnectionTestQueue" timeout="50"  timeoutUnit="SECONDS"/>
+            <munit-tools:assert-that expression="#[payload]" is="#[MunitTools::equalTo('Hello World')]"/>
+
             <logger level="ERROR" message="Disconnecting proxy..."/>
             <connection-test:disconnect-proxy proxyPort="${connection.lost.port}"/>
-            <munit-tools:sleep time="2000"/>
+            <munit-tools:sleep time="20000"/>
 
             <connection-test:reconnect-proxy proxyPort="${connection.lost.port}"/>
             <logger level="ERROR" message="Reconnected proxy!"/>
@@ -40,6 +42,8 @@
             <redis-cris:publish config-ref="redis-config-unstable" channel="test-channel" message="Hello World"/>
         </munit:execution>
         <munit:validation>
+            <munit-tools:dequeue queueName="reconnectionTestQueue" timeout="60" timeoutUnit="SECONDS"/>
+            <logger level="ERROR" message="#[payload]" />
             <munit-tools:assert-that expression="#[payload]" is="#[MunitTools::equalTo('Hello World')]"/>
         </munit:validation>
     </munit:test>
@@ -47,8 +51,9 @@
     <flow name="redis-testFlow">
         <redis-cris:subscribe doc:name="On New Message" doc:id="acae2582-d1bd-4048-a39a-53b03e17ee33"
                               config-ref="redis-config-unstable" channel="test-channel"/>
-        <logger level="INFO" message="#[payload]"/>
+        <logger level="INFO" message="Message............"/>
         <set-payload value="#[payload]" doc:name="Set Payload" doc:id="607dcbec-d8cb-4be9-a3a6-0797e89becac"/>
+        <logger level="INFO" doc:name="Logger" doc:id="209c9c6b-20b5-4f53-a8b7-9f4a1f023870" message="#[payload]"/>
+        <munit-tools:queue queueName="reconnectionTestQueue"/>
     </flow>
-
 </mule>

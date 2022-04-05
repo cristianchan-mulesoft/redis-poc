@@ -135,10 +135,6 @@ public class RedisOperations {
                       final String message)
       throws ConnectionException {
 
-    try {
-      connection.publish(channel, message);
-    } catch (final JedisConnectionException exception) {
-      throw new ConnectionException("Unable to connect to redis  : " + connection);
-    }
+    connection.publish(channel, message);
   }
 }

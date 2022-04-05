@@ -8,10 +8,9 @@
 package redis.internal.error.exceptions;
 
 
-import org.mule.runtime.extension.api.exception.ModuleException;
-import redis.internal.error.RedisErrorType;
-
 import static redis.internal.error.RedisErrorType.CONNECTIVITY;
+
+import org.mule.runtime.extension.api.exception.ModuleException;
 
 public class RedisConnectionException extends ModuleException {
 
