@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:munit="http://www.mulesoft.org/schema/mule/munit"
+      xmlns:redis-cris="http://www.mulesoft.org/schema/mule/redis-cris"
+      xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+      xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+      xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/redis-cris http://www.mulesoft.org/schema/mule/redis-cris/current/mule-redis-cris.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+    <munit:config name="redis-cris-operation-test.xml" />
+
+
+    <munit:test name="testSetStringFlow" description="MUnit Test" doc:id="ec35af55-b30d-4316-85cd-ed791e17caca" >
+        <munit:execution>
+            <redis-cris:set type="String" doc:name="Set" doc:id="c59e4b8f-ea7a-422b-8bcb-6e0a794fafd1" config-ref="redis-config">
+                <redis-cris:content ><![CDATA[#[{
+	"key": "test",
+	"value": "hello-test"
+}]]]></redis-cris:content>
+            </redis-cris:set>
+        </munit:execution>
+        <munit:validation >
+            <redis-cris:get type="String" doc:name="Get" doc:id="d5dbbe27-bb7d-48e1-a084-21284d098ff9" config-ref="redis-config" key="test"/>
+            <munit-tools:assert doc:name="equalToTestPayload" doc:id="119bb2b0-18fc-4c3d-99ea-5ea0c051d41d" >
+                <munit-tools:that ><![CDATA[#[import * from dw::test::Asserts
+ ---
+payload must equalTo("hello-test")]]]></munit-tools:that>
+            </munit-tools:assert>
+        </munit:validation>
+    </munit:test>
+
+
+    <munit:test name="testSetListFlow" description="MUnit Test" doc:id="ec35af55-b30d-4316-85cd-ed791e17caca" >
+        <munit:execution>
+            <redis-cris:set type="List" doc:name="Set" doc:id="c59e4b8f-ea7a-422b-8bcb-6e0a794fafd1" config-ref="redis-config">
+                <redis-cris:content ><![CDATA[#[{
+	"key": "test-list",
+	"values":  ["item1", "item2"]
+}]]]></redis-cris:content>
+            </redis-cris:set>
+        </munit:execution>
+        <munit:validation >
+            <redis-cris:get type="List" doc:name="Get" doc:id="d5dbbe27-bb7d-48e1-a084-21284d098ff9" config-ref="redis-config" key="test-list"/>
+            <munit-tools:assert-that
+                    expression="#[payload]"
+                    is="#[MunitTools::hasSize(MunitTools::greaterThan(1))]"/>
+            <munit-tools:assert doc:name="payloadIsArray" doc:id="119bb2b0-18fc-4c3d-99ea-5ea0c051d41d" >
+                <munit-tools:that ><![CDATA[#[import * from dw::test::Asserts
+ ---
+payload must beArray()]]]></munit-tools:that>
+            </munit-tools:assert>
+            <munit-tools:assert doc:name="payloadContainsValueItem1" doc:id="119bb2b0-18fc-4c3d-99ea-5ea0c051d41d" >
+                <munit-tools:that ><![CDATA[#[import * from dw::test::Asserts
+ ---
+"item1" must beOneOf(payload)]]]></munit-tools:that>
+            </munit-tools:assert>
+            <munit-tools:assert doc:name="payloadContainsValueItem2" doc:id="119bb2b0-18fc-4c3d-99ea-5ea0c051d41d" >
+                <munit-tools:that ><![CDATA[#[import * from dw::test::Asserts
+ ---
+"item2" must beOneOf(payload)]]]></munit-tools:that>
+            </munit-tools:assert>
+        </munit:validation>
+    </munit:test>
+
+    <munit:test name="testSetSetFlow" description="MUnit Test" doc:id="ec35af55-b30d-4316-85cd-ed791e17caca" >
+        <munit:execution>
+            <redis-cris:set type="Set" doc:name="Set" doc:id="c59e4b8f-ea7a-422b-8bcb-6e0a794fafd1" config-ref="redis-config">
+                <redis-cris:content ><![CDATA[#[{
+	"key": "test-set",
+	"values":  ["item1", "item2"]
+}]]]></redis-cris:content>
+            </redis-cris:set>
+        </munit:execution>
+        <munit:validation >
+            <redis-cris:get type="Set" doc:name="Get" doc:id="d5dbbe27-bb7d-48e1-a084-21284d098ff9" config-ref="redis-config" key="test-set"/>
+            <munit-tools:assert-that
+                    expression="#[payload]"
+                    is="#[MunitTools::hasSize(MunitTools::greaterThan(1))]"/>
+            <munit-tools:assert doc:name="payloadIsArray" doc:id="119bb2b0-18fc-4c3d-99ea-5ea0c051d41d" >
+                <munit-tools:that ><![CDATA[#[import * from dw::test::Asserts
+ ---
+payload must beArray()]]]></munit-tools:that>
+            </munit-tools:assert>
+            <munit-tools:assert doc:name="payloadContainsValueItem1" doc:id="119bb2b0-18fc-4c3d-99ea-5ea0c051d41d" >
+                <munit-tools:that ><![CDATA[#[import * from dw::test::Asserts
+ ---
+"item1" must beOneOf(payload)]]]></munit-tools:that>
+            </munit-tools:assert>
+            <munit-tools:assert doc:name="payloadContainsValueItem2" doc:id="119bb2b0-18fc-4c3d-99ea-5ea0c051d41d" >
+                <munit-tools:that ><![CDATA[#[import * from dw::test::Asserts
+ ---
+"item2" must beOneOf(payload)]]]></munit-tools:that>
+            </munit-tools:assert>
+        </munit:validation>
+    </munit:test>
+</mule>

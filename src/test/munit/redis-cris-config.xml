@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:redis-cris="http://www.mulesoft.org/schema/mule/redis-cris" xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/redis-cris http://www.mulesoft.org/schema/mule/redis-cris/current/mule-redis-cris.xsd">
+
+    <redis-cris:jedis-config name="redis-config" doc:name="redis-config">
+        <redis-cris:connection port="${redis.port}"  timeout="120"/>
+    </redis-cris:jedis-config>
+
+    <redis-cris:jedis-config name="redis-config-unstable" doc:name="redis-config-unstable">
+        <redis-cris:connection port="${connection.lost.port}"  timeout="3000">
+            <reconnection >
+                <reconnect-forever frequency="5000"/>
+            </reconnection>
+        </redis-cris:connection>
+    </redis-cris:jedis-config>
+</mule>
